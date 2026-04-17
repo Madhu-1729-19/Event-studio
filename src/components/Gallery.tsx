@@ -9,17 +9,62 @@ const Gallery = () => {
   const [selectedFolder, setSelectedFolder] = useState<'photos' | 'videos' | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  const photos = [
-    'A1.png', 'A2.jpg', 'A3.jpg', 'A4.jpg', 'A5.jpg',
-    'B1.png', 'B2.png', 'B3.png', 'B4.png', 'B5.png',
-    'B6.png', 'B7.png', 'B8.png', 'B9.png', 'B10.png',
-    'B11.jpg', 'B12.png', 'B13.png', 'B14.png'
-  ];
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [videos, setVideos] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const videos = [
-    'YouCut_20240624_143023170.mp4',
-    'YouCut_20250304_115719386.mp4'
-  ];
+  useEffect(() => {
+    setIsAdmin(localStorage.getItem('isAdmin') === 'true');
+    fetchMedia('photos');
+    fetchMedia('videos');
+  }, []);
+
+  const fetchMedia = async (type: 'photos' | 'videos') => {
+    try {
+      const res = await fetch(`/api/media?type=${type}`);
+      if (res.ok) {
+        if (type === 'photos') setPhotos(await res.json());
+        else setVideos(await res.json());
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', selectedFolder!);
+
+    setIsUploading(true);
+    try {
+      const res = await fetch('/api/media', { method: 'POST', body: formData });
+      if (res.ok) {
+        alert('File uploaded successfully!');
+        fetchMedia(selectedFolder!);
+      } else alert('Upload failed');
+    } catch (err) {
+      alert('Upload error');
+    }
+    setIsUploading(false);
+  };
+
+  const handleDelete = async (fileName: string) => {
+    if (!confirm(`Are you sure you want to delete ${fileName}?`)) return;
+    try {
+      const res = await fetch(`/api/media?type=${selectedFolder}&name=${fileName}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchMedia(selectedFolder!);
+      } else {
+        alert('Delete failed');
+      }
+    } catch (err) {
+      alert('Delete error');
+    }
+  };
 
   const openFolder = (type: 'photos' | 'videos') => {
     setSelectedFolder(type);
@@ -39,6 +84,7 @@ const Gallery = () => {
         <header className="gallery-header">
           <span className="badge">STUDIO ARCHIVES</span>
           <h2>Our Creations</h2>
+          {isAdmin && <span className="admin-status">ADMIN MEDIA MANAGER ACTIVE</span>}
         </header>
 
         <AnimatePresence mode="wait">
@@ -56,7 +102,9 @@ const Gallery = () => {
                 onClick={() => openFolder('photos')}
               >
                 <div className="folder-preview">
-                  <img src="/media/GAllERy/B14.png" alt="Albums Thumbnail" />
+                  {photos.length > 0 ? (
+                    <img src={`/media/GAllERy/${photos.find(p => p.includes('B14')) || photos[0]}`} alt="Albums Thumbnail" />
+                  ) : <div className="placeholder-folder" />}
                   <div className="folder-overlay">
                     <Camera size={28} />
                   </div>
@@ -73,7 +121,9 @@ const Gallery = () => {
                 onClick={() => openFolder('videos')}
               >
                 <div className="folder-preview video-preview">
-                  <video src="/media/videos/YouCut_20250304_115719386.mp4" muted loop onMouseOver={e => e.currentTarget.play()} onMouseOut={e => {e.currentTarget.pause(); e.currentTarget.currentTime = 0;}} />
+                  {videos.length > 0 ? (
+                    <video src={`/media/videos/${videos.find(v => v.includes('386')) || videos[0]}`} muted loop onMouseOver={e => e.currentTarget.play()} onMouseOut={e => {e.currentTarget.pause(); e.currentTarget.currentTime = 0;}} />
+                  ) : <div className="placeholder-folder" />}
                   <div className="folder-overlay">
                     <Play size={28} />
                   </div>
@@ -99,11 +149,20 @@ const Gallery = () => {
                 <div className="active-label">
                   {selectedFolder === 'photos' ? 'CHRONOLOGICAL ALBUMS' : 'CINEMATIC MOTION FILMS'}
                 </div>
+                
+                {isAdmin && (
+                  <div className="admin-upload-controls">
+                    <label className="upload-btn">
+                      {isUploading ? 'UPLOADING...' : '➕ ADD MEDIA'}
+                      <input type="file" onChange={handleFileUpload} accept={selectedFolder === 'photos' ? 'image/*' : 'video/*'} disabled={isUploading} hidden />
+                    </label>
+                  </div>
+                )}
               </div>
 
               <div className="one-after-another-list">
                 {selectedFolder === 'photos' ? (
-                  photos.map((img, i) => (
+                  photos.length > 0 ? photos.map((img, i) => (
                     <motion.div 
                       key={i} 
                       className="media-strip-item"
@@ -118,12 +177,15 @@ const Gallery = () => {
                           className="original-img"
                           onClick={() => setSelectedImage(`/media/GAllERy/${img}`)}
                         />
+                        {isAdmin && (
+                          <button className="admin-delete-media" onClick={() => handleDelete(img)}><X size={20} /></button>
+                        )}
                       </div>
                       <div className="img-metadata">{img.split('.')[0]}</div>
                     </motion.div>
-                  ))
+                  )) : <p style={{ color: '#888' }}>No photos available.</p>
                 ) : (
-                  videos.map((vid, i) => (
+                  videos.length > 0 ? videos.map((vid, i) => (
                     <motion.div 
                       key={i} 
                       className="media-strip-item"
@@ -133,9 +195,12 @@ const Gallery = () => {
                     >
                       <div className="video-strip-container">
                         <video controls src={`/media/videos/${vid}`} />
+                        {isAdmin && (
+                          <button className="admin-delete-media" onClick={() => handleDelete(vid)}><X size={20} /></button>
+                        )}
                       </div>
                     </motion.div>
-                  ))
+                  )) : <p style={{ color: '#888' }}>No videos available.</p>
                 )}
               </div>
             </motion.div>
@@ -330,6 +395,54 @@ const Gallery = () => {
 
         .lightbox-img { max-width: 100%; max-height: 95vh; object-fit: contain; }
         .close-lightbox { position: absolute; top: 2rem; right: 2rem; background: transparent; border: none; color: #fff; cursor: pointer; }
+
+        .admin-status {
+          display: block;
+          color: #ff6b6b;
+          font-size: 10px;
+          letter-spacing: 0.3em;
+          margin-top: 1rem;
+        }
+        
+        .upload-btn {
+          background: var(--gold);
+          color: black;
+          padding: 8px 16px;
+          font-size: 10px;
+          font-weight: bold;
+          letter-spacing: 0.2em;
+          cursor: pointer;
+          border-radius: 4px;
+          transition: background 0.3s;
+        }
+        .upload-btn:hover { background: var(--gold-light); }
+
+        .admin-delete-media {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          background: rgba(255, 0, 0, 0.8);
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: 0.3s;
+        }
+        .admin-delete-media:hover {
+          background: red;
+          transform: scale(1.1);
+        }
+
+        .placeholder-folder {
+          width: 100%;
+          height: 100%;
+          background: #111;
+        }
 
         @media (max-width: 768px) {
           .one-after-another-list { gap: 4rem; }

@@ -20,6 +20,7 @@ export default function Home() {
           <li><a href="#about">Events</a></li>
           <li><a href="#gallery">Gallery</a></li>
           <li><a href="#contact">Contact</a></li>
+          <li><a href="/admin" style={{ color: 'var(--gold)', fontWeight: 'bold' }}>Admin</a></li>
         </ul>
       </nav>
 
