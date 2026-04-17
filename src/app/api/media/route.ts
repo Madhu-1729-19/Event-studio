@@ -16,7 +16,9 @@ export async function GET(request: Request) {
     if (!fs.existsSync(directory)) {
       return NextResponse.json([]);
     }
-    const files = fs.readdirSync(directory).filter(f => !f.startsWith('.'));
+    const files = fs.readdirSync(directory)
+      .filter(f => !f.startsWith('.'))
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
     return NextResponse.json(files);
   } catch (err) {
     return NextResponse.json({ error: 'Failed to read directory' }, { status: 500 });
