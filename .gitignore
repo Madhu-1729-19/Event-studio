@@ -37,8 +37,8 @@ yarn-error.log*
 next-env.d.ts
 
 # large media - GitHub safe
-*.mp4
 /images/hero.gif
 /Edited photos 😝/
 /sye-raa-sye-raa-narasimha-reddy.gif
 /src/generated/prisma
+
