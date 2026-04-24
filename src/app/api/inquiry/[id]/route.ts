@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import prisma from '@/lib/prisma';
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const db = getDb();
-    db.prepare('DELETE FROM Inquiry WHERE id = ?').run(parseInt(id));
+    await prisma.inquiry.delete({
+      where: { id: parseInt(id) }
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Error deleting inquiry:', error);
     return NextResponse.json({ error: 'Failed to delete inquiry' }, { status: 500 });
   }
 }

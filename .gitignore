@@ -42,3 +42,9 @@ next-env.d.ts
 /sye-raa-sye-raa-narasimha-reddy.gif
 /src/generated/prisma
 
+# Database
+*.db*
+*.sqlite*
+.vercel/
+.next/
+
