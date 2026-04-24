@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "LakshmanPadma – Event Studio",
+  title: "Lakshman-Padma Studios",
   description: "Where Every Celebration Becomes a Legend. Luxury Event Studio in Kurnool, Andhra Pradesh.",
 };
 

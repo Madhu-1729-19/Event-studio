@@ -32,8 +32,8 @@ export default function Home() {
       <ContactForm />
 
       <footer>
-        <div className="footer-brand">LakshmanPadma</div>
-        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>© 2026 LakshmanPadma Event Studio. All rights reserved.</div>
+        <div className="footer-brand">Lakshman-Padma Studios</div>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>© 2026 Lakshman-Padma Studios. All rights reserved.</div>
         <div className="footer-links">
           <a href="#">Instagram</a>
           <a href="#">Facebook</a>
